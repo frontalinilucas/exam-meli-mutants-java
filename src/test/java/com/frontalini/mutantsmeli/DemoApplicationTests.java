@@ -1,4 +1,4 @@
-package com.example.mutantsmeli;
+package com.frontalini.mutantsmeli;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
