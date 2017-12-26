@@ -1,43 +1,43 @@
 package com.frontalini.mutantsmeli.controller;
 
-import com.frontalini.mutantsmeli.model.Dna;
-import com.frontalini.mutantsmeli.model.MutantModel;
-import com.google.gson.Gson;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.frontalini.mutantsmeli.services.MutantService;
+import com.google.gson.JsonObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.stereotype.*;
 
-import java.util.Arrays;
-
 @Controller
-@SpringBootApplication
 public class MutantController {
 
-    public static void main(String[] args) {
-		SpringApplication.run(MutantController.class, args);
-	}
+    private MutantService mutantService;
+
+    @Autowired
+    public MutantController(MutantService mutantService) {
+        this.mutantService = mutantService;
+    }
 
     @RequestMapping("/")
     @ResponseBody
-    String home() {
-        return "Hello World!";
+    ResponseEntity home() {
+        return new ResponseEntity(HttpStatus.OK);
     }
 
-    @RequestMapping(
+    @PostMapping(
             value = "/mutant",
-            method = RequestMethod.POST,
             consumes = "application/json")
     @ResponseBody
-    String mutant(@RequestBody String body) {
-        Gson gson = new Gson();
-        //TODO: Validar json
-        //TODO: Inyeccion de dependencias
-        Dna dna = gson.fromJson(body, Dna.class);
-        MutantModel mutantModel = new MutantModel();
-        mutantModel.detectMutant(dna);
-        //return Arrays.toString(dna.getDna());
-        return "Hello Mutant! ";
+    ResponseEntity mutant(@RequestBody String body) {
+        return mutantService.detectMutant(body);
+    }
+
+    @PostMapping(
+            value = "/stats",
+            produces = "application/json")
+    @ResponseBody
+    JsonObject stats(@RequestBody String body) {
+        return new JsonObject();
     }
 
 }

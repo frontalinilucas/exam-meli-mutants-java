@@ -1,22 +1,53 @@
-package com.frontalini.mutantsmeli.model;
+package com.frontalini.mutantsmeli.services;
 
-import com.frontalini.mutantsmeli.database.MutantDatabase;
+import com.frontalini.mutantsmeli.model.Dna;
+import com.frontalini.mutantsmeli.repositories.GenericRepository;
+import com.frontalini.mutantsmeli.repositories.MutantRepository;
+import com.google.gson.Gson;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.ValidationException;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
-public class MutantModel {
+import java.net.URISyntaxException;
+import java.sql.SQLException;
+
+@Service
+public class MutantService {
 
     private static final int QUANTITY_EQUAL_LETTERS = 4;
     private static final int QUANTITY_SEQUENCE = 2;
     private static final String VALID_LETTERS = "ATCG";
 
-    public boolean detectMutant(Dna dna){
+    private GenericRepository repository;
+
+    @Autowired
+    public MutantService(MutantRepository repository) {
+        this.repository = repository;
+    }
+
+    public ResponseEntity detectMutant(String body){
+        try{
+            Schema schema = SchemaLoader.load(new JSONObject(new JSONTokener(MutantService.class.getResourceAsStream("/mutant_schema.json"))));
+            schema.validate(new JSONObject(new JSONTokener(body)));
+        }catch (ValidationException e){
+            return new ResponseEntity<>("Invalid body format.", HttpStatus.FORBIDDEN);
+        }
+
+        Dna dna = new Gson().fromJson(body, Dna.class);
         dna.setMutant(isMutant(dna.getDna()));
         try{
-            MutantDatabase.saveDna(dna);
-        }catch (Exception e){
+            repository.saveDna(dna);
+        }catch(URISyntaxException | SQLException e){
             //TODO: Log error
         }
 
-        return dna.isMutant();
+        return dna.isMutant() ? new ResponseEntity(HttpStatus.OK) : new ResponseEntity(HttpStatus.FORBIDDEN);
     }
 
     public boolean isMutant(String[] dna) {

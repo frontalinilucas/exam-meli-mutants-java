@@ -1,14 +1,16 @@
-package com.frontalini.mutantsmeli.database;
+package com.frontalini.mutantsmeli.repositories;
 
 import com.frontalini.mutantsmeli.model.Dna;
+import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.*;
 
-public class MutantDatabase {
+@Repository
+public class MutantRepository implements GenericRepository {
 
-    private static Connection getConnection() throws URISyntaxException, SQLException {
+    private Connection getConnection() throws URISyntaxException, SQLException {
         URI dbUri = new URI(System.getenv("DATABASE_URL"));
 
         String username = dbUri.getUserInfo().split(":")[0];
@@ -18,23 +20,23 @@ public class MutantDatabase {
         return DriverManager.getConnection(dbUrl, username, password);
     }
 
-    private static Connection createTableIfNotExists() throws URISyntaxException, SQLException {
+    private Connection createTableIfNotExists() throws URISyntaxException, SQLException {
         Connection connection = getConnection();
 
         Statement statement = connection.createStatement();
-        String sql = TableAdn.CREATE_TABLE;
+        String sql = TableDna.CREATE_TABLE;
         statement.executeUpdate(sql);
         statement.close();
         return connection;
     }
 
-    private static boolean existsDna(String dna) throws URISyntaxException, SQLException {
+    private boolean existsDna(String dna) throws URISyntaxException, SQLException {
         Connection connection = createTableIfNotExists();
 
         PreparedStatement statement = connection.prepareStatement(
                 "SELECT 1 " +
-                        " FROM " + TableAdn.TABLE_NAME +
-                        " WHERE " + TableAdn.COLUMN_NAME_ADN + " = ?");
+                        " FROM " + TableDna.TABLE_NAME +
+                        " WHERE " + TableDna.COLUMN_NAME_ADN + " = ?");
         statement.setString(1, dna);
         ResultSet resultSet = statement.executeQuery();
         boolean existsDna = resultSet.next();
@@ -43,13 +45,14 @@ public class MutantDatabase {
         return existsDna;
     }
 
-    public static void saveDna(Dna dna) throws URISyntaxException, SQLException {
+    @Override
+    public void saveDna(Dna dna) throws URISyntaxException, SQLException {
         if(!existsDna(dna.toString())){
             Connection connection = getConnection();
 
             PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO " + TableAdn.TABLE_NAME +
-                    " (" + TableAdn.COLUMN_NAME_ADN + ", " + TableAdn.COLUMN_NAME_ISMUTANT + ") " +
+                    "INSERT INTO " + TableDna.TABLE_NAME +
+                    " (" + TableDna.COLUMN_NAME_ADN + ", " + TableDna.COLUMN_NAME_ISMUTANT + ") " +
                     " VALUES (?, ?)");
             statement.setString(1, dna.toString());
             statement.setInt(2, dna.getMutant());
@@ -57,6 +60,20 @@ public class MutantDatabase {
             statement.close();
             connection.close();
         }
+    }
+
+    private class TableDna {
+
+        static final String TABLE_NAME = "adns";
+        static final String COLUMN_NAME_ID = "id";
+        static final String COLUMN_NAME_ADN = "adn";
+        static final String COLUMN_NAME_ISMUTANT = "is_mutant";
+        static final String CREATE_TABLE =
+                "CREATE TABLE IF NOT EXISTS " + TABLE_NAME +
+                        " (" + COLUMN_NAME_ID + " SERIAL PRIMARY KEY, " +
+                        " " + COLUMN_NAME_ADN + " TEXT, " +
+                        " " + COLUMN_NAME_ISMUTANT + " INTEGER)";
+
     }
 
 }
