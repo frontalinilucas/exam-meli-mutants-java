@@ -2,6 +2,7 @@ package com.frontalini.mutantsmeli.services;
 
 import com.frontalini.mutantsmeli.exceptions.InvalidDimensionMatrixException;
 import com.frontalini.mutantsmeli.model.Dna;
+import com.frontalini.mutantsmeli.model.Stats;
 import com.frontalini.mutantsmeli.repositories.GenericRepository;
 import com.frontalini.mutantsmeli.repositories.MutantRepository;
 import com.google.gson.Gson;
@@ -23,7 +24,7 @@ public class MutantService {
 
     private static final int QUANTITY_EQUAL_LETTERS = 4;
     private static final int QUANTITY_SEQUENCE = 2;
-    private static final String VALID_LETTERS = "ATCG";
+    private static final String VALID_LETTERS = "ACGT";
 
     private GenericRepository repository;
 
@@ -33,6 +34,7 @@ public class MutantService {
     }
 
     public ResponseEntity detectMutant(String body){
+        //TODO: SI ya lo proceso que lo busque y no lo vuelva a procesar
         try{
             Schema schema = SchemaLoader.load(new JSONObject(new JSONTokener(MutantService.class.getResourceAsStream("/mutant_schema.json"))));
             schema.validate(new JSONObject(new JSONTokener(body)));
@@ -51,6 +53,15 @@ public class MutantService {
         }
 
         return dna.isMutant() ? new ResponseEntity(HttpStatus.OK) : new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+
+    public ResponseEntity stats(){
+        try{
+            Stats stats = repository.getStats();
+            return new ResponseEntity<>(new Gson().toJson(stats), HttpStatus.OK);
+        }catch(URISyntaxException | SQLException e){
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     public boolean isMutant(String[] dna) throws InvalidDimensionMatrixException {

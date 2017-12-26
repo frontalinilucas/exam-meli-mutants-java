@@ -1,7 +1,6 @@
 package com.frontalini.mutantsmeli.controller;
 
 import com.frontalini.mutantsmeli.services.MutantService;
-import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,8 +35,8 @@ public class MutantController {
             value = "/stats",
             produces = "application/json")
     @ResponseBody
-    JsonObject stats(@RequestBody String body) {
-        return new JsonObject();
+    ResponseEntity stats() {
+        return mutantService.stats();
     }
 
 }
