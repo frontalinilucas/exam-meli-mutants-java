@@ -12,6 +12,7 @@ public class Stats {
     @SerializedName("count_human_dna")
     private int countHuman;
 
+    @SerializedName("ratio")
     private float ratio;
 
     public int getCountMutant() {

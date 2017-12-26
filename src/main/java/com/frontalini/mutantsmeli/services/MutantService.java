@@ -33,26 +33,16 @@ public class MutantService {
         this.repository = repository;
     }
 
-    public ResponseEntity detectMutant(String body){
-        //TODO: SI ya lo proceso que lo busque y no lo vuelva a procesar
+    public ResponseEntity mutant(String body){
         try{
-            Schema schema = SchemaLoader.load(new JSONObject(new JSONTokener(MutantService.class.getResourceAsStream("/mutant_schema.json"))));
-            schema.validate(new JSONObject(new JSONTokener(body)));
-        }catch (ValidationException e){
+            validateBodySchema(body);
+            Dna dna = isMutant(body);
+            return dna.isMutant() ? new ResponseEntity(HttpStatus.OK) : new ResponseEntity(HttpStatus.FORBIDDEN);
+        }catch(ValidationException e){
             return new ResponseEntity<>("Invalid body format.", HttpStatus.FORBIDDEN);
-        }
-
-        Dna dna = new Gson().fromJson(body, Dna.class);
-        try{
-            dna.setMutant(isMutant(dna.getDna()));
-            repository.saveDna(dna);
         }catch(InvalidDimensionMatrixException e){
             return new ResponseEntity<>("Invalid matrix dimension.", HttpStatus.FORBIDDEN);
-        }catch(URISyntaxException | SQLException e){
-            //TODO: Log error
         }
-
-        return dna.isMutant() ? new ResponseEntity(HttpStatus.OK) : new ResponseEntity(HttpStatus.FORBIDDEN);
     }
 
     public ResponseEntity stats(){
@@ -62,6 +52,24 @@ public class MutantService {
         }catch(URISyntaxException | SQLException e){
             return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void validateBodySchema(String body) throws ValidationException {
+        Schema schema = SchemaLoader.load(new JSONObject(new JSONTokener(MutantService.class.getResourceAsStream("/mutant_schema.json"))));
+        schema.validate(new JSONObject(new JSONTokener(body)));
+    }
+
+    private Dna isMutant(String body) throws InvalidDimensionMatrixException {
+        Dna dna = new Gson().fromJson(body, Dna.class);
+        Boolean isMutant = repository.isMutant(dna.toString());
+
+        if(isMutant == null){
+            dna.setMutant(isMutant(dna.getDna()));
+            repository.saveDna(dna);
+        }else
+            dna.setMutant(isMutant);
+
+        return dna;
     }
 
     public boolean isMutant(String[] dna) throws InvalidDimensionMatrixException {

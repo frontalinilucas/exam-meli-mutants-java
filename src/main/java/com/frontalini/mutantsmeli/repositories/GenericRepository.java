@@ -10,7 +10,8 @@ import java.sql.SQLException;
 @Repository
 public interface GenericRepository {
 
-    void saveDna(Dna dna) throws URISyntaxException, SQLException;
+    void saveDna(Dna dna);
     Stats getStats() throws URISyntaxException, SQLException;
+    Boolean isMutant(String sequenceDna);
 
 }

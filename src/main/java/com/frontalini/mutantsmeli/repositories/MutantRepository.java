@@ -21,6 +21,62 @@ public class MutantRepository implements GenericRepository {
         return DriverManager.getConnection(dbUrl, username, password);
     }
 
+    @Override
+    public void saveDna(Dna dna) {
+        if(!existsDna(dna.toString())){
+            try{
+                Connection connection = getConnection();
+
+                PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO " + TableDna.TABLE_NAME +
+                                " (" + TableDna.COLUMN_NAME_DNA + ", " + TableDna.COLUMN_NAME_ISMUTANT + ") " +
+                                " VALUES (?, ?)");
+                statement.setString(1, dna.toString());
+                statement.setInt(2, dna.getMutant());
+                statement.executeUpdate();
+                statement.close();
+                connection.close();
+            }catch(URISyntaxException | SQLException e){
+                //TODO: Log error
+            }
+        }
+    }
+
+    @Override
+    public Stats getStats() throws URISyntaxException, SQLException {
+        Connection connection = createTableIfNotExists();
+        Stats stats = new Stats();
+        stats.setCountMutant(getCount(connection, 1));
+        stats.setCountHuman(getCount(connection, 0));
+
+        connection.close();
+        return stats;
+    }
+
+    @Override
+    public Boolean isMutant(String sequenceDna) {
+        try{
+            Connection connection = createTableIfNotExists();
+
+            Boolean isMutant = null;
+            PreparedStatement statement = connection.prepareStatement(
+                    "SELECT " + TableDna.COLUMN_NAME_ISMUTANT +
+                            " FROM " + TableDna.TABLE_NAME +
+                            " WHERE " + TableDna.COLUMN_NAME_DNA + " = ?");
+            statement.setString(1, sequenceDna);
+            ResultSet resultSet = statement.executeQuery();
+            if(resultSet.next())
+                isMutant = resultSet.getInt(TableDna.COLUMN_NAME_ISMUTANT) == 1;
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+            return isMutant;
+        }catch(URISyntaxException | SQLException e){
+            return false;
+        }
+    }
+
     private Connection createTableIfNotExists() throws URISyntaxException, SQLException {
         Connection connection = getConnection();
 
@@ -31,20 +87,8 @@ public class MutantRepository implements GenericRepository {
         return connection;
     }
 
-    private boolean existsDna(String dna) throws URISyntaxException, SQLException {
-        Connection connection = createTableIfNotExists();
-
-        PreparedStatement statement = connection.prepareStatement(
-                "SELECT 1 " +
-                        " FROM " + TableDna.TABLE_NAME +
-                        " WHERE " + TableDna.COLUMN_NAME_DNA + " = ?");
-        statement.setString(1, dna);
-        ResultSet resultSet = statement.executeQuery();
-        boolean existsDna = resultSet.next();
-        resultSet.close();
-        statement.close();
-        connection.close();
-        return existsDna;
+    private boolean existsDna(String dna) {
+        return isMutant(dna) != null;
     }
 
     private int getCount(Connection connection, int isMutant) throws SQLException {
@@ -61,34 +105,6 @@ public class MutantRepository implements GenericRepository {
         resultSet.close();
         statement.close();
         return count;
-    }
-
-    @Override
-    public void saveDna(Dna dna) throws URISyntaxException, SQLException {
-        if(!existsDna(dna.toString())){
-            Connection connection = getConnection();
-
-            PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO " + TableDna.TABLE_NAME +
-                    " (" + TableDna.COLUMN_NAME_DNA + ", " + TableDna.COLUMN_NAME_ISMUTANT + ") " +
-                    " VALUES (?, ?)");
-            statement.setString(1, dna.toString());
-            statement.setInt(2, dna.getMutant());
-            statement.executeUpdate();
-            statement.close();
-            connection.close();
-        }
-    }
-
-    @Override
-    public Stats getStats() throws URISyntaxException, SQLException {
-        Connection connection = getConnection();
-        Stats stats = new Stats();
-        stats.setCountMutant(getCount(connection, 1));
-        stats.setCountHuman(getCount(connection, 0));
-
-        connection.close();
-        return stats;
     }
 
     private class TableDna {
