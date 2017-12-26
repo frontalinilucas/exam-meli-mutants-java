@@ -83,7 +83,7 @@ public class MutantServiceTests {
 
     @Test
     public void lowerCaseLetters() {
-        String[] dna = {"atcgta", "aaaaa", "ttttt", "tgcat", "actaa"};
+        String[] dna = {"atcgt", "aaaaa", "ttttt", "tgcat", "actaa"};
         assert !mutantService.isMutant(dna);
     }
 
