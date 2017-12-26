@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.stereotype.*;
 
+import java.util.Arrays;
+
 @Controller
 @SpringBootApplication
 public class MutantController {
@@ -30,9 +32,12 @@ public class MutantController {
     String mutant(@RequestBody String body) {
         Gson gson = new Gson();
         //TODO: Validar json
+        //TODO: Inyeccion de dependencias
         Dna dna = gson.fromJson(body, Dna.class);
         MutantModel mutantModel = new MutantModel();
-        return "Hello Mutant! " + mutantModel.isMutant(dna.getDna());
+        mutantModel.detectMutant(dna);
+        //return Arrays.toString(dna.getDna());
+        return "Hello Mutant! ";
     }
 
 }

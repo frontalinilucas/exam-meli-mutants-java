@@ -1,12 +1,25 @@
 package com.frontalini.mutantsmeli.model;
 
+import com.frontalini.mutantsmeli.database.MutantDatabase;
+
 public class MutantModel {
 
     private static final int QUANTITY_EQUAL_LETTERS = 4;
     private static final int QUANTITY_SEQUENCE = 2;
     private static final String VALID_LETTERS = "ATCG";
 
-    public boolean isMutant(String[] dna){
+    public boolean detectMutant(Dna dna){
+        dna.setMutant(isMutant(dna.getDna()));
+        try{
+            MutantDatabase.saveDna(dna);
+        }catch (Exception e){
+            //TODO: Log error
+        }
+
+        return dna.isMutant();
+    }
+
+    public boolean isMutant(String[] dna) {
         int countDnaMutant = 0;
         for(int i = 0; i < dna.length; i++){
             for(int j = 0; j < dna.length; j++){
