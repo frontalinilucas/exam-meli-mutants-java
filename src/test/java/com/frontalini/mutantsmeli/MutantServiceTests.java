@@ -1,5 +1,6 @@
 package com.frontalini.mutantsmeli;
 
+import com.frontalini.mutantsmeli.exceptions.InvalidDimensionMatrixException;
 import com.frontalini.mutantsmeli.services.MutantService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,6 +97,12 @@ public class MutantServiceTests {
     public void borderSequence() {
         String[] dna = {"AAAA", "TCGA", "CGCA", "TGTA"};
         assert mutantService.isMutant(dna);
+    }
+
+    @Test(expected = InvalidDimensionMatrixException.class)
+    public void invalidMatrixDimension() {
+        String[] dna = {"AAA", "ATC", "AGG", "AGT"};
+        mutantService.isMutant(dna);
     }
 
     @Test

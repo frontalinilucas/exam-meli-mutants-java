@@ -1,5 +1,6 @@
 package com.frontalini.mutantsmeli.services;
 
+import com.frontalini.mutantsmeli.exceptions.InvalidDimensionMatrixException;
 import com.frontalini.mutantsmeli.model.Dna;
 import com.frontalini.mutantsmeli.repositories.GenericRepository;
 import com.frontalini.mutantsmeli.repositories.MutantRepository;
@@ -40,9 +41,11 @@ public class MutantService {
         }
 
         Dna dna = new Gson().fromJson(body, Dna.class);
-        dna.setMutant(isMutant(dna.getDna()));
         try{
+            dna.setMutant(isMutant(dna.getDna()));
             repository.saveDna(dna);
+        }catch(InvalidDimensionMatrixException e){
+            return new ResponseEntity<>("Invalid matrix dimension.", HttpStatus.FORBIDDEN);
         }catch(URISyntaxException | SQLException e){
             //TODO: Log error
         }
@@ -50,7 +53,10 @@ public class MutantService {
         return dna.isMutant() ? new ResponseEntity(HttpStatus.OK) : new ResponseEntity(HttpStatus.FORBIDDEN);
     }
 
-    public boolean isMutant(String[] dna) {
+    public boolean isMutant(String[] dna) throws InvalidDimensionMatrixException {
+        if (dna.length != dna[0].length())
+            throw new InvalidDimensionMatrixException();
+
         int countDnaMutant = 0;
         for(int i = 0; i < dna.length; i++){
             for(int j = 0; j < dna.length; j++){
